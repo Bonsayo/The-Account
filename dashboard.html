@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Courtside Live</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style>
+:root { --surface: #f7f9fb; --on-surface: #191c1e; --surface-variant: #e0e3e5; --outline-variant: #bccbb9; --primary: #006e2f; --primary-container: #22c55e; --secondary-container: #dae2fd; --tertiary: #505f76; --on-primary-container: #004b1e; --on-surface-variant: #3d4a3d; --surface-container-lowest: #ffffff; --surface-container-low: #f2f4f6; }
+body { font-family: Inter, sans-serif; background: var(--surface); color: var(--on-surface); margin: 0; min-height: 100vh; }
+.live-dot { animation: blink 1.5s infinite; }
+@keyframes blink { 0%,100% { opacity: 1 } 50% { opacity: 0.3 } }
+.match-card { background: var(--surface-container-lowest); border-radius: 12px; border: 1px solid var(--outline-variant); overflow: hidden; }
+.match-card:hover { box-shadow: 0 8px 30px rgba(15,23,42,0.08); }
+.finished-card { opacity: 0.8; }
+.finished-card:hover { opacity: 1; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background: var(--surface-variant); border-radius: 4px; }
+.filter-chip { padding: 4px 16px; border-radius: 9999px; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; cursor: pointer; border: none; transition: all 0.2s; }
+.filter-chip.active { background: #131b2e; color: white; }
+.filter-chip:not(.active) { background: var(--surface-variant); color: var(--on-surface); }
+</style>
+</head>
+<body>
+<header style="position:fixed;top:0;left:0;width:100%;z-index:50;display:flex;justify-content:space-between;align-items:center;padding:0 16px;height:64px;background:var(--surface);border-bottom:1px solid var(--outline-variant);">
+  <h1 style="font-family:'Archivo Narrow',sans-serif;font-size:20px;font-weight:700;color:var(--primary);margin:0;">COURTSIDE LIVE</h1>
+  <div style="flex:1;max-width:400px;margin:0 16px;display:none;" class="md:block">
+    <input id="s" oninput="f()" style="width:100%;background:var(--surface-container-low);border:1px solid var(--outline-variant);border-radius:8px;padding:8px 12px;font-size:16px;outline:none;" placeholder="Search by team..."/>
+  </div>
+  <button onclick="document.getElementById('g').innerHTML='<div style=\"text-align:center;padding:48px;\">Refreshing...</div>';fetchM()" style="background:none;border:none;cursor:pointer;color:var(--primary);"><span class="material-symbols-outlined">refresh</span></button>
+</header>
+<main style="padding:80px 16px 32px;max-width:1280px;margin:0 auto;">
+  <div class="md:hidden mb-4">
+    <input id="sm" oninput="f()" style="width:100%;background:var(--surface-container-low);border:1px solid var(--outline-variant);border-radius:8px;padding:8px 12px;font-size:16px;outline:none;" placeholder="Search by team..."/>
+  </div>
+  <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:16px;border-bottom:1px solid var(--outline-variant);">
+    <button class="filter-chip active" data-f="all" onclick="s('all')">All</button>
+    <button class="filter-chip" data-f="live" onclick="s('live')"><span class="live-dot" style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#22c55e;margin-right:4px;"></span>Live</button>
+    <button class="filter-chip" data-f="finished" onclick="s('finished')">Finished</button>
+  </div>
+  <div style="display:flex;justify-content:space-between;margin-bottom:16px;">
+    <span id="c" style="font-size:14px;color:var(--on-surface-variant);"></span>
+    <span id="t" style="font-size:12px;color:var(--on-surface-variant);"></span>
+  </div>
+  <div id="g" style="display:grid;grid-template-columns:1fr;gap:20px;"><div style="text-align:center;padding:48px;color:var(--on-surface-variant);">Loading...</div></div>
+</main>
+<script>
+let M = [], fl = 'all', q = '';
+function gl(n) {
+  const m = {'golden state warriors':'GSW','los angeles lakers':'LAL','los angeles clippers':'LAC','miami heat':'MIA','boston celtics':'BOS','chicago bulls':'CHI','philadelphia 76ers':'PHI','milwaukee bucks':'MIL','phoenix suns':'PHX','denver nuggets':'DEN','dallas mavericks':'DAL','brooklyn nets':'BKN','new york knicks':'NYK','toronto raptors':'TOR','atlanta hawks':'ATL','cleveland cavaliers':'CLE','detroit pistons':'DET','indiana pacers':'IND','orlando magic':'ORL','washington wizards':'WAS','charlotte hornets':'CHA','memphis grizzlies':'MEM','new orleans pelicans':'NOP','san antonio spurs':'SAS','houston rockets':'HOU','oklahoma city thunder':'OKC','utah jazz':'UTA','sacramento kings':'SAC','portland trail blazers':'POR','minnesota timberwolves':'MIN'};
+  const k = (n||'').toLowerCase().replace(/\s*\(cyber\)$/,'').trim();
+  return m[k] || (n||'').split(' ').filter(w=>w[0]>='A'&&w[0]<='Z').map(w=>w[0]).join('').slice(0,3) || '???';
+}
+function ft(ts) { return ts ? new Date(ts).toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) : ''; }
+async function fetchM() {
+  try {
+    const r = await fetch('/api/matches');
+    if (!r.ok) throw new Error(r.status);
+    M = await r.json();
+    document.getElementById('t').textContent = 'Updated: ' + new Date().toLocaleTimeString();
+    r2();
+  } catch(e) {
+    document.getElementById('g').innerHTML = '<div style="text-align:center;padding:48px;color:red;">Error: '+e.message+'</div>';
+  }
+}
+function s(f) { fl = f; document.querySelectorAll('.filter-chip').forEach(el => el.classList.toggle('active', el.dataset.f === f)); r2(); }
+function f() { q = (document.getElementById('s').value || document.getElementById('sm').value || '').toLowerCase(); document.getElementById('sm').value = q; document.getElementById('s').value = q; r2(); }
+function r2() {
+  let fi = M.filter(m => { if (fl === 'live' && m.finished) return false; if (fl === 'finished' && !m.finished) return false; if (q) { const h=(m.homeTeam||'').toLowerCase(), a=(m.awayTeam||'').toLowerCase(); if (!h.includes(q) && !a.includes(q)) return false; } return true; });
+  fi.sort((a,b) => fl === 'live' ? (b.homeScore+b.awayScore)-(a.homeScore+a.awayScore) : (b.startTime||0)-(a.startTime||0));
+  document.getElementById('c').textContent = M.length + ' matches' + (fl !== 'all' ? ' (' + fi.length + ' ' + fl + ')' : '');
+  const g = document.getElementById('g');
+  if (!fi.length) { g.innerHTML = '<div style="text-align:center;padding:48px;color:var(--on-surface-variant);">No matches</div>'; return; }
+  g.innerHTML = fi.map(m => {
+    const l = !m.finished, w = m.homeScore > m.awayScore ? 'away' : m.awayScore > m.homeScore ? 'home' : null;
+    const ha = gl(m.homeTeam), aa = gl(m.awayTeam);
+    const qs = (m.quarters || []).map(q => ({ ...q, label: 'Q' + q.quarter }));
+    return '<div class="match-card' + (m.finished ? ' finished-card' : '') + '"><div style="padding:16px;display:flex;flex-direction:column;gap:16px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--surface-variant);padding-bottom:8px;">' +
+        '<div style="display:flex;align-items:center;gap:8px;background:' + (l ? 'var(--primary-container)' : 'var(--surface-variant)') + ';color:' + (l ? 'var(--on-primary-container)' : 'var(--tertiary)') + ';padding:4px 8px;border-radius:4px;font-size:14px;font-weight:600;">' +
+          (l ? '<span style="width:6px;height:6px;border-radius:50%;background:var(--on-primary-container);" class="live-dot"></span>' : '') +
+          (l ? 'LIVE' : 'FINISHED') + '</div>' +
+        '<div style="text-align:right;"><div style="font-size:12px;color:var(--on-surface-variant);">' + (m.startTime ? ft(m.startTime) : '') + '</div></div></div>' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;padding:16px 0;">' +
+        '<div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;"><div style="width:64px;height:64px;border-radius:50%;background:var(--surface-variant);border:1px solid var(--outline-variant);display:flex;align-items:center;justify-content:center;"><span class="material-symbols-outlined" style="font-size:28px;color:var(--tertiary);">sports_basketball</span></div><span style="font-weight:700;font-size:16px;text-align:center;">' + (m.homeTeam||'Home') + '</span><span style="font-size:12px;color:var(--on-surface-variant);">' + ha + '</span></div>' +
+        '<div style="display:flex;flex-direction:column;align-items:center;padding:0 24px;"><div style="display:flex;align-items:baseline;gap:16px;"><span style="font-family:\'Archivo Narrow\',sans-serif;font-size:48px;font-weight:700;letter-spacing:-0.02em;line-height:1;' + (m.finished&&w==='home'?'color:var(--on-surface-variant);':'color:var(--on-surface);') + '">' + (m.homeScore??0) + '</span><span style="color:var(--on-surface-variant);font-size:16px;">-</span><span style="font-family:\'Archivo Narrow\',sans-serif;font-size:48px;font-weight:700;letter-spacing:-0.02em;line-height:1;' + (m.finished&&w==='away'?'color:var(--on-surface-variant);':'color:var(--on-surface);') + '">' + (m.awayScore??0) + '</span></div>' + (m.finished&&w?'<span style="font-size:12px;color:var(--tertiary);margin-top:4px;">' + (w==='home'?m.awayTeam:m.homeTeam).split(' ')[0] + ' Wins</span>':'') + '</div>' +
+        '<div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;"><div style="width:64px;height:64px;border-radius:50%;background:var(--surface-variant);border:1px solid var(--outline-variant);display:flex;align-items:center;justify-content:center;"><span class="material-symbols-outlined" style="font-size:28px;color:var(--tertiary);">sports_basketball</span></div><span style="font-weight:700;font-size:16px;text-align:center;">' + (m.awayTeam||'Away') + '</span><span style="font-size:12px;color:var(--on-surface-variant);">' + aa + '</span></div></div>' +
+      (qs.length ? '<div style="border-top:1px solid var(--surface-variant);padding-top:12px;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="color:var(--on-surface-variant);"><th style="text-align:left;padding:4px 8px;"></th>' + qs.map(q=>'<th style="text-align:center;padding:4px 8px;">' + q.label + (q.status===2?' <span class="live-dot" style="display:inline-block;width:4px;height:4px;border-radius:50%;background:#22c55e;"></span>':'') + '</th>').join('') + '</tr></thead><tbody><tr><td style="padding:4px 8px;font-weight:600;">'+ha+'</td>'+qs.map(q=>'<td style="text-align:center;padding:4px 8px;">'+q.homeScore+'</td>').join('')+'</tr><tr><td style="padding:4px 8px;font-weight:600;">'+aa+'</td>'+qs.map(q=>'<td style="text-align:center;padding:4px 8px;">'+q.awayScore+'</td>').join('')+'</tr></tbody></table></div>' : '') +
+      '</div></div>';
+  }).join('');
+}
+fetchM();
+setInterval(fetchM, 30000);
+</script>
+</body>
+</html>

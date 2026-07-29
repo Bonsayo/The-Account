@@ -1,0 +1,51 @@
+import { defineSchema, defineTable } from "convex/server";
+import { v } from "convex/values";
+
+export default defineSchema({
+  matches: defineTable({
+    matchId: v.string(),
+    matchName: v.optional(v.string()),
+    startedAt: v.optional(v.number()),
+    finalHomeScore: v.optional(v.number()),
+    finalAwayScore: v.optional(v.number()),
+    finishedAt: v.optional(v.number()),
+    homeTeam: v.optional(v.string()),
+    awayTeam: v.optional(v.string()),
+    homeScore: v.optional(v.number()),
+    awayScore: v.optional(v.number()),
+    periodScores: v.optional(v.array(v.object({
+      period: v.number(),
+      homeScore: v.number(),
+      awayScore: v.number(),
+      label: v.string(),
+    }))),
+    finished: v.optional(v.boolean()),
+    startTime: v.optional(v.number()),
+    sportName: v.optional(v.string()),
+    league: v.optional(v.string()),
+    timestamp: v.optional(v.number()),
+    hasAllQuarters: v.optional(v.boolean()),
+  }).index("by_matchId", ["matchId"]),
+
+  quarters: defineTable({
+    matchId: v.string(),
+    homeTeam: v.optional(v.string()),
+    awayTeam: v.optional(v.string()),
+    quarter: v.number(),
+    homeScore: v.number(),
+    awayScore: v.number(),
+    status: v.number(),
+    timestamp: v.number(),
+    hasAllQuarters: v.optional(v.boolean()),
+  }).index("by_matchId", ["matchId", "quarter"]),
+
+  discoveredGames: defineTable({
+    eventId: v.number(),
+    homeTeam: v.string(),
+    awayTeam: v.string(),
+    startTime: v.number(),
+    firstSeen: v.number(),
+    lastSeen: v.number(),
+    finished: v.optional(v.boolean()),
+  }).index("by_eventId", ["eventId"]),
+});
