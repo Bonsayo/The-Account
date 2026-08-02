@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-inter);
+  --font-archivo: var(--font-archivo);
+  --font-mono: var(--font-mono);
+}
+
+body {
+  font-family: var(--font-inter), sans-serif;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.animate-pulse {
+  animation: blink 1.5s infinite;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #e0e3e5; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #6d7b6c; }
